@@ -23,9 +23,10 @@ Ki_angular = 0.0
 Kd_angular = 0.1
 
 class TurtleBotController:
-    def __init__(self, target_x, target_y):
+    def __init__(self, target_x, target_y, distance_threshold=0.3):
         self.target_x = target_x
         self.target_y = target_y
+        self.distance_threshold = distance_threshold  # Distance threshold for reaching target
 
         self.current_x = 0.0
         self.current_y = 0.0
@@ -97,8 +98,8 @@ class TurtleBotController:
 
             if self.state == self.TURNING:
                 # TURNING STATE: Only rotate, no forward movement
-                # rospy.loginfo("Turning to target angle. Angle error: {:.3f} rad ({:.1f} deg)".format(
-                #     angle_error, math.degrees(angle_error)))
+                rospy.loginfo("Turning to target angle. Angle error: {:.3f} rad ({:.1f} deg)".format(
+                    angle_error, math.degrees(angle_error)))
                 
                 angular_vel, self.prev_error_angular, self.sum_error_angular = self.compute_pid(
                     angle_error, 0, self.prev_error_angular, self.sum_error_angular,
@@ -117,7 +118,7 @@ class TurtleBotController:
 
             elif self.state == self.MOVING:
                 # MOVING STATE: Move forward with minimal angular correction
-                # rospy.loginfo("Moving forward. Distance: {:.3f}m".format(distance))
+                rospy.loginfo("Moving forward. Distance: {:.3f}m".format(distance))
                 
                 linear_vel, self.prev_error_linear, self.sum_error_linear = self.compute_pid(
                     distance, 0, self.prev_error_linear, self.sum_error_linear,
@@ -179,7 +180,8 @@ if __name__ == '__main__':
         for point in path:
             rospy.loginfo("Path point: x={:.2f}, y={:.2f}".format(point[0], point[1]))
             x, y = point
-            controller = TurtleBotController(x, y)
+            # Use 0.3 units as the distance threshold for reaching targets near walls
+            controller = TurtleBotController(x, y, distance_threshold=0.5)
             controller.execute()
         
     except rospy.ROSInterruptException:
